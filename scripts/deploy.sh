@@ -26,7 +26,8 @@ set -euo pipefail
 cd /opt/mochee/next
 echo "$REV" > REVISION
 npm ci --no-audit --no-fund --loglevel=error
-npm run build
+# Test deployment: nothing a visitor does is kept past their tab (src/freshStart.ts).
+VITE_FRESH_EACH_TAB=1 npm run build
 # Data that outlives deploys.
 rm -rf .data tmp
 mkdir -p tmp

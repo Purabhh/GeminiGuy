@@ -18,8 +18,10 @@ export interface GuardRefusal {
 export function refuseCrossSite(req: IncomingMessage, contentType: string | null): GuardRefusal | null {
   const site = req.headers['sec-fetch-site']
   if (typeof site === 'string' && site !== 'same-origin' && site !== 'none') return { status: 403, error: 'forbidden' }
+  // Same host over http (dev) or https (production, behind Caddy, which keeps the Host header).
   const origin = req.headers.origin
-  if (typeof origin === 'string' && origin !== `http://${req.headers.host ?? ''}`) return { status: 403, error: 'forbidden' }
+  const host = req.headers.host ?? ''
+  if (typeof origin === 'string' && origin !== `http://${host}` && origin !== `https://${host}`) return { status: 403, error: 'forbidden' }
   if (contentType) {
     const type = String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase()
     if (type !== contentType) return { status: 415, error: 'bad-request' }
