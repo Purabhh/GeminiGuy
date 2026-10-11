@@ -12,7 +12,8 @@
     "test:anim": "node --test tests/character/*.test.ts",
     "test:server": "node --test tests/server/*.test.ts",
     "test:ui": "node --test tests/ui/*.test.ts",
-    "test:lesson": "node --test tests/lesson/*.test.ts"
+    "test:lesson": "node --test tests/lesson/*.test.ts",
+    "start": "vite preview"
   },
   "dependencies": {
     "@fontsource/caveat": "^5.3.0",

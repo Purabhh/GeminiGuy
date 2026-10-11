@@ -30,4 +30,14 @@ export default defineConfig({
     // port cannot read the documents API.
     cors: false,
   },
+  // Production (`npm start` on the droplet): the built app plus the same API
+  // plugins, local-only behind Caddy, which terminates HTTPS. MOCHEE_HOSTS is
+  // the public host name(s) Caddy forwards, comma separated.
+  preview: {
+    port: 4176,
+    strictPort: true,
+    host: '127.0.0.1',
+    allowedHosts: (process.env.MOCHEE_HOSTS ?? '').split(',').map((h) => h.trim()).filter(Boolean),
+    cors: false,
+  },
 })
