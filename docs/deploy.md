@@ -39,5 +39,14 @@ journalctl -u mochee -n 100      # app logs
 systemctl restart mochee         # restart
 ```
 
+## Test mode: nothing is kept
+
+- **In the browser:** the droplet build keeps no visitor progress past the tab
+  (`VITE_FRESH_EACH_TAB=1`, see `src/freshStart.ts`).
+- **On the server:** uploaded documents are wiped every night at 4 AM New York
+  time by `/usr/local/bin/mochee-reset-docs` (cron: `/etc/cron.d/mochee-reset`,
+  log: `/var/log/mochee-reset.log`). The voice cache is kept. Run that command
+  by hand to wipe now.
+
 Everyone who opens the site uses these API keys and shares each class's
-uploads (there are no accounts yet).
+uploads until the nightly wipe (there are no accounts yet).
