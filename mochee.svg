@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6a4fd0"/>
+      <stop offset="1" stop-color="#3d5ad6"/>
+    </linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d5ad6"/>
+      <stop offset="1" stop-color="#2f3fa8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- tile: hard offset shadow + pink tile -->
+  <rect x="48" y="48" width="432" height="432" rx="100" fill="#1d1b24"/>
+  <rect x="32" y="32" width="432" height="432" rx="100" fill="#ffb3cd" stroke="#1d1b24" stroke-width="16"/>
+
+  <!-- mochi body: hard shadow + white dome -->
+  <path d="M116,412 C108,312 168,236 260,236 C352,236 412,312 404,412 Q404,436 380,436 L140,436 Q116,436 116,412Z" fill="#1d1b24"/>
+  <path d="M104,400 C96,300 156,224 248,224 C340,224 400,300 392,400 Q392,424 368,424 L128,424 Q104,424 104,400Z" fill="#fffdf8" stroke="#1d1b24" stroke-width="14" stroke-linejoin="round"/>
+  <!-- soft cream belly shading -->
+  <path d="M128,398 Q248,430 368,398 L368,410 Q368,414 364,414 L132,414 Q128,414 128,410Z" fill="#fff1d4"/>
+
+  <!-- face -->
+  <ellipse cx="166" cy="356" rx="30" ry="17" fill="#ff8fab"/>
+  <ellipse cx="330" cy="356" rx="30" ry="17" fill="#ff8fab"/>
+  <circle cx="204" cy="322" r="21" fill="#1d1b24"/>
+  <circle cx="292" cy="322" r="21" fill="#1d1b24"/>
+  <circle cx="211" cy="314" r="7" fill="#fffdf8"/>
+  <circle cx="299" cy="314" r="7" fill="#fffdf8"/>
+  <path d="M228,350 Q248,372 268,350" fill="none" stroke="#1d1b24" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- cap band (skullcap) -->
+  <path d="M172,196 L172,254 Q248,286 324,254 L324,196 Z" fill="url(#band)" stroke="#1d1b24" stroke-width="14" stroke-linejoin="round"/>
+
+  <!-- mortarboard: hard shadow, thickness, top -->
+  <polygon points="258,130 414,190 258,250 102,190" fill="#1d1b24"/>
+  <polygon points="88,180 248,242 408,180 408,198 248,260 88,198" fill="#2f3fa8" stroke="#1d1b24" stroke-width="14" stroke-linejoin="round"/>
+  <polygon points="248,118 408,180 248,242 88,180" fill="url(#cap)" stroke="#1d1b24" stroke-width="14" stroke-linejoin="round"/>
+  <!-- board highlight -->
+  <polygon points="248,140 340,176 248,164 156,176" fill="#c9b8ff" opacity="0.55"/>
+
+  <!-- tassel -->
+  <path d="M248,180 L370,206 L370,262" fill="none" stroke="#1d1b24" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="248" cy="180" r="15" fill="#ff8fab" stroke="#1d1b24" stroke-width="10"/>
+  <rect x="352" y="254" width="36" height="48" rx="13" fill="#ff8fab" stroke="#1d1b24" stroke-width="11" stroke-linejoin="round"/>
+</svg>
