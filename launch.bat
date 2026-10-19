@@ -93,6 +93,7 @@ if not exist "%CHROME_EXE%" (
 )
 
 start "" "%CHROME_EXE%" --app="%APP_URL%" --user-data-dir="%PROFILE%"
+call :taskbaricon
 echo [%date% %time%] app window launched - supervising >> "%LOG%"
 
 REM ---- Supervisor: poll for the app-window process every 3s. ----
@@ -122,10 +123,17 @@ goto :end
 :openwindow_reattach
 if exist "%CHROME_EXE%" (
   start "" "%CHROME_EXE%" --app="%APP_URL%" --user-data-dir="%PROFILE%"
+  call :taskbaricon
 ) else (
   start "" "%APP_URL%"
 )
 goto :end
+
+:taskbaricon
+REM Tag the app window so the taskbar shows mochee.ico at full resolution
+REM instead of Chrome's 16px favicon (see window-icon.ps1). Runs on its own.
+start "" /b powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0window-icon.ps1"
+exit /b 0
 
 :portup
 REM errorlevel 0 if something accepts TCP on localhost:%PORT% (IPv4 or IPv6).
