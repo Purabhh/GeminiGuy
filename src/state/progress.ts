@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
+import { DUEL_CONFIG, MATCH_ID } from '../../shared/duel.ts'
 import { TEACH_BACK_LIMITS } from '../../shared/teachBack.ts'
 
 // Mochee's coins. Only learning earns them (a section finished, a right
@@ -9,7 +10,7 @@ import { TEACH_BACK_LIMITS } from '../../shared/teachBack.ts'
 // wrapper that swallows every storage error, so private windows and blocked
 // site data just start fresh each visit.
 
-export type CoinReason = 'sectionDone' | 'quizCorrect' | 'bossWin' | 'lessonDone' | 'teachBack'
+export type CoinReason = 'sectionDone' | 'quizCorrect' | 'bossWin' | 'lessonDone' | 'teachBack' | 'duel'
 
 export const COIN_REWARD: Record<CoinReason, number> = {
   sectionDone: 25, // the lesson moves on a section: lecture to quick check (runner.ts, once per section per run)
@@ -17,6 +18,7 @@ export const COIN_REWARD: Record<CoinReason, number> = {
   bossWin: 100, // default; bossStore supplies the actual tier / question-count reward
   lessonDone: 50, // the guided lesson's last step reached
   teachBack: TEACH_BACK_LIMITS.maxCoins, // per topic, earned as the explanation improves
+  duel: DUEL_CONFIG.coins.win, // default; a Personal duel's payout comes from the server's match summary
 }
 
 // Short label for the floating "+N coins" toast, per reason.
@@ -26,6 +28,7 @@ export const COIN_LABEL: Record<CoinReason, string> = {
   bossWin: 'Boss beaten!',
   lessonDone: 'Lesson complete',
   teachBack: 'Topic taught!',
+  duel: 'Duel payout',
 }
 
 // Every dance, in shop order. Bounce is his from the start; the rest are bought.
@@ -159,6 +162,9 @@ export interface ProgressState {
   owned: UnlockId[]
   teachBackRewards: Record<string, number>
   awardTeachBack: (topicId: string, score: number) => number
+  duelsPaid: string[] // match ids already paid, newest last, so a payout lands once
+  // Pays a finished duel's coins once per match; 0 if it was already paid.
+  awardDuel: (matchId: string, coins: number) => number
   lastAward: CoinAward | null
   lastPurchase: Purchase | null
   // `coins` overrides the reason's COIN_REWARD.
@@ -172,17 +178,21 @@ interface Saved {
   coins: number
   owned: UnlockId[]
   teachBackRewards: Record<string, number>
+  duelsPaid: string[]
 }
+
+const DUELS_PAID_KEPT = 200
 
 // A stored save as it can be trusted: whole, non-negative coins and known items, once each.
 function cleanSave(raw: unknown): Saved {
-  const r = (raw ?? {}) as { coins?: unknown; owned?: unknown; teachBackRewards?: unknown }
+  const r = (raw ?? {}) as { coins?: unknown; owned?: unknown; teachBackRewards?: unknown; duelsPaid?: unknown }
   const coins = typeof r.coins === 'number' && Number.isFinite(r.coins) && r.coins >= 0 ? Math.round(r.coins) : 0
   const owned = Array.isArray(r.owned) ? [...new Set(r.owned.filter((id): id is UnlockId => typeof id === 'string' && SHOP_IDS.has(id)))] : []
   const teachBackRewards = Object.fromEntries(Object.entries(r.teachBackRewards && typeof r.teachBackRewards === 'object' ? r.teachBackRewards : {})
     .filter(([id, amount]) => /^[a-f0-9]{16}-t\d{1,2}$/.test(id) && typeof amount === 'number' && Number.isFinite(amount) && amount >= 0 && amount <= TEACH_BACK_LIMITS.maxCoins)
     .map(([id, amount]) => [id, Math.round(amount as number)]))
-  return { coins, owned, teachBackRewards }
+  const duelsPaid = Array.isArray(r.duelsPaid) ? r.duelsPaid.filter((id): id is string => typeof id === 'string' && MATCH_ID.test(id)).slice(-DUELS_PAID_KEPT) : []
+  return { coins, owned, teachBackRewards, duelsPaid }
 }
 
 export const useProgress = create<ProgressState>()(
@@ -191,6 +201,7 @@ export const useProgress = create<ProgressState>()(
       coins: 0,
       owned: [],
       teachBackRewards: {},
+      duelsPaid: [],
       lastAward: null,
       lastPurchase: null,
       award: (reason, amount) =>
@@ -210,6 +221,17 @@ export const useProgress = create<ProgressState>()(
         })
         return gained
       },
+      awardDuel: (matchId, coins) => {
+        const s = get()
+        if (!MATCH_ID.test(matchId) || s.duelsPaid.includes(matchId)) return 0
+        const gained = Number.isFinite(coins) && coins > 0 ? Math.round(coins) : 0
+        set({
+          coins: s.coins + gained,
+          duelsPaid: [...s.duelsPaid, matchId].slice(-DUELS_PAID_KEPT),
+          ...(gained > 0 ? { lastAward: { id: (s.lastAward?.id ?? 0) + 1, reason: 'duel' as const, coins: gained } } : {}),
+        })
+        return gained
+      },
       spend: (id) => {
         const s = get()
         const item = SHOP.find((i) => i.id === id)
@@ -217,14 +239,14 @@ export const useProgress = create<ProgressState>()(
         set({ coins: s.coins - item.price, owned: [...s.owned, id], lastPurchase: { id: (s.lastPurchase?.id ?? 0) + 1, item: id } })
         return true
       },
-      resetProgress: () => set({ coins: 0, owned: [], teachBackRewards: {}, lastAward: null, lastPurchase: null }),
+      resetProgress: () => set({ coins: 0, owned: [], teachBackRewards: {}, duelsPaid: [], lastAward: null, lastPurchase: null }),
     }),
     {
       name: PROGRESS_STORAGE_KEY,
       // 1: { xp } (levels). 2: { coins, owned }.
       version: 2,
       storage: createJSONStorage(() => safeStorage),
-      partialize: (s): Saved => ({ coins: s.coins, owned: s.owned, teachBackRewards: s.teachBackRewards }),
+      partialize: (s): Saved => ({ coins: s.coins, owned: s.owned, teachBackRewards: s.teachBackRewards, duelsPaid: s.duelsPaid }),
       migrate: (persisted, version) => {
         if (version < 2) return migrateXp(Number((persisted as { xp?: unknown } | undefined)?.xp))
         return persisted

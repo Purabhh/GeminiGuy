@@ -5,6 +5,8 @@ import type { Connect, Plugin } from 'vite'
 import { DOCS_ROUTES, uploadFormat } from '../../shared/docsTypes.ts'
 import { STUDY_LIMITS, STUDY_ROUTES } from '../../shared/lessonPack.ts'
 import { TEACH_BACK_LIMITS, TEACH_BACK_ROUTES } from '../../shared/teachBack.ts'
+import { DUEL_ROUTES } from '../../shared/duel.ts'
+import { createDuelService, type DuelService } from '../duel/engine.ts'
 import { hasGeminiKey, hasVoiceKey, KEY_FILES, readGeminiKey } from '../keys.ts'
 import { refuseCrossSite } from '../requestGuard.ts'
 import { DOCS_CONFIG } from './config.ts'
@@ -231,15 +233,30 @@ async function route(service: DocsService, root: string, maxBytes: number, maxAu
   return null
 }
 
+// The duel API (shared/duel.ts DUEL_ROUTES), served next to the documents
+// API because notebook duels quiz the same documents.
+async function duelRoute(duel: DuelService, req: IncomingMessage): Promise<Reply | null> {
+  const [path, query = ''] = (req.url ?? '').split('?')
+  const method = req.method ?? 'GET'
+  const methodNotAllowed: Reply = { status: 405, body: { error: 'method' } }
+  if (path === DUEL_ROUTES.me) return method === 'GET' ? duel.me(new URLSearchParams(query).get('playerId')) : methodNotAllowed
+  if (path === DUEL_ROUTES.start) return method === 'POST' ? duel.start(await readJson(req)) : methodNotAllowed
+  if (path === DUEL_ROUTES.answer) return method === 'POST' ? duel.answer(await readJson(req)) : methodNotAllowed
+  return null
+}
+
 // Connect middleware for the documents API; also used directly by the tests.
-export function docsMiddleware(options: DocsMiddlewareOptions): Connect.NextHandleFunction & { service: () => DocsService } {
+export function docsMiddleware(options: DocsMiddlewareOptions): Connect.NextHandleFunction & { service: () => DocsService; duel: () => DuelService } {
   let service: DocsService | null = null
+  let duel: DuelService | null = null
+  const dataDir = options.dataDir ?? join(options.root, DOCS_CONFIG.dataDir)
   const getService = () =>
     (service ??= createDocsService({
-      dataDir: options.dataDir ?? join(options.root, DOCS_CONFIG.dataDir),
+      dataDir,
       readKey: options.readKey ?? (() => readGeminiKey(options.root)),
       gemini: options.gemini,
     }))
+  const getDuel = () => (duel ??= createDuelService({ dataDir, docs: getService() }))
   const maxBytes = options.maxUploadBytes ?? DOCS_CONFIG.limits.maxUploadBytes
   const maxAudioBytes = options.maxAudioBytes ?? STUDY_LIMITS.maxAudioBytes
 
@@ -254,7 +271,8 @@ export function docsMiddleware(options: DocsMiddlewareOptions): Connect.NextHand
       const refused = refuseCrossSite(req, isUpload || req.method === 'DELETE' ? null : 'application/json')
       if (refused) return send(res, { status: refused.status, body: { error: refused.error } })
     }
-    route(getService(), options.root, maxBytes, maxAudioBytes, req)
+    const handled = url.startsWith('/api/duel/') ? duelRoute(getDuel(), req) : route(getService(), options.root, maxBytes, maxAudioBytes, req)
+    handled
       .then((reply) => {
         if (reply?.status === 503) res.setHeader('connection', 'close')
         if (reply) send(res, reply)
@@ -269,7 +287,7 @@ export function docsMiddleware(options: DocsMiddlewareOptions): Connect.NextHand
         send(res, { status: 500, body: { error: 'internal' } })
       })
   }
-  return Object.assign(handler, { service: getService })
+  return Object.assign(handler, { service: getService, duel: getDuel })
 }
 
 export function docsApi(): Plugin {

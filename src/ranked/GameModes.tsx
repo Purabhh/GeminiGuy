@@ -21,8 +21,8 @@ export function GameModes({ selected, onSelect }: { selected: GameModeId; onSele
             <span className={s.modeIcon} aria-hidden>
               {m.icon}
             </span>
-            <span className={s.modeTag} data-rated={m.rated}>
-              {m.rated ? 'Rated' : 'Unrated'}
+            <span className={s.modeTag} data-rated={m.rated} data-soon={!m.playable}>
+              {m.playable ? (m.rated ? 'Rated' : 'Unrated') : 'Soon'}
             </span>
           </div>
           <div className={s.modeName}>{m.name}</div>
