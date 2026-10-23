@@ -2,7 +2,25 @@
 
 **Live:** https://mochee-app.vercel.app
 
-A 3D study buddy. Mochee stands in a white-box classroom between two browser-style windows (lecture notes on the left, a whiteboard on the right) and walks the student through a lesson: he walks, points, highlights, reveals the board step by step, narrates in a real voice and runs a quick check. Students can also upload their own PDFs and ask him questions; every answer cites the exact page and quote it came from, and he says so when the document does not cover the question.
+A 3D tutor and study platform. Students study their own material with a 3D tutor, then compete against each other in ranked 1v1 duels on College Board exams like the SAT and PSAT.
+
+## Ranked duels (backend)
+
+The backend is a multi-user SAT/PSAT prep platform built around a real-time 1v1 duel engine.
+
+- **Server-owned matches.** The server owns the clock and the scoring; clients only send answers, so a match can't be gamed from the browser.
+- **Horizontal scale.** Match state fans out across server instances over Redis pub/sub, so both players can be connected to different processes.
+- **Ratings.** Elo updates (with placement games and a K-factor that settles as you play) run inside row-locked Postgres transactions, so concurrent finishes never apply a rating twice.
+- **Event-sourced match log.** Every answer and state change is an append-only event, so any match can be replayed or audited.
+- **Exactly-once payouts.** Coin rewards are keyed by idempotency keys and settled in the same transaction that marks the match finished.
+- **Verified questions.** Every generated question is checked by an independent re-solve before it's published to the question bank, and question difficulty is re-rated from real match results.
+- **Tested.** 100+ backend tests cover the engine, rating math, settlement and the store.
+
+Stack: TypeScript, Node.js, PostgreSQL, Redis, WebSockets.
+
+## The 3D tutor
+
+Mochee stands in a white-box classroom between two browser-style windows (lecture notes on the left, a whiteboard on the right) and walks the student through a lesson: he walks, points, highlights, reveals the board step by step, narrates in a real voice and runs a quick check. Students can also upload their own PDFs and ask him questions; every answer cites the exact page and quote it came from, and he says so when the document does not cover the question.
 
 Built with Vite 7, React 19, TypeScript, react-three-fiber, drei, Rapier physics, zustand, a Blender-built character and Gemini on a server-side proxy.
 
