@@ -1,40 +1,49 @@
+import type { PlayerProfile } from '../../shared/duel'
+import { RATING, tierOf, TIERS } from '../../shared/rating'
 import { CardCharacter } from '../pages/HomeScene'
-import { PLAYER, TIERS } from './mockData'
 import s from './Ranked.module.css'
 
-// The player's rank card: placement progress (everyone starts unranked) and
-// the tier ladder, with Mochee standing by in the corner.
-export function RankHero() {
-  const { placementsDone: done, placementsTotal: total } = PLAYER
+// The player's rank card: placement progress until the first five rated
+// games are played, then the tier. The ladder lights up the current tier.
+export function RankHero({ profile }: { profile: PlayerProfile | null }) {
+  const p = profile ?? { rating: RATING.start, games: 0, wins: 0, losses: 0, draws: 0, placementsLeft: RATING.placements, recent: [] }
+  const placed = p.placementsLeft === 0
+  const tier = tierOf(p.rating)
+  const done = RATING.placements - p.placementsLeft
+  const streak = currentStreak(p)
   return (
     <section className={s.hero}>
       <div className={s.heroMain}>
-        <div className={s.eyebrow}>Season 1 · Preview</div>
+        <div className={s.eyebrow}>Season 1 · Beta</div>
         <div className={s.rankRow}>
-          <div className={s.rankBadge} data-tier="unranked" aria-hidden>
-            ?
+          <div className={s.rankBadge} data-tier={placed ? tier.id : 'unranked'} style={placed ? { background: tier.color } : undefined} aria-hidden>
+            {placed ? tier.name[0] : '?'}
           </div>
           <div>
-            <div className={s.rankName}>Unranked</div>
+            <div className={s.rankName}>{placed ? tier.name : 'Unranked'}</div>
             <div className={s.rankSub}>
-              Play {total - done} placement match{total - done === 1 ? '' : 'es'} to get your rank
+              {placed
+                ? `${p.rating} rating`
+                : `Play ${p.placementsLeft} placement match${p.placementsLeft === 1 ? '' : 'es'} to get your rank`}
             </div>
           </div>
         </div>
 
-        <div className={s.placements} aria-label={`${done} of ${total} placement matches played`}>
-          {Array.from({ length: total }, (_, i) => (
-            <span key={i} className={s.pip} data-done={i < done} />
-          ))}
-          <span className={s.pipLabel}>
-            {done} / {total}
-          </span>
-        </div>
+        {!placed && (
+          <div className={s.placements} aria-label={`${done} of ${RATING.placements} placement matches played`}>
+            {Array.from({ length: RATING.placements }, (_, i) => (
+              <span key={i} className={s.pip} data-done={i < done} />
+            ))}
+            <span className={s.pipLabel}>
+              {done} / {RATING.placements}
+            </span>
+          </div>
+        )}
 
         <div className={s.stats}>
-          <Stat label="Rating" value={`${PLAYER.rating}`} hint="provisional" />
-          <Stat label="Record" value={`${PLAYER.wins}–${PLAYER.losses}`} />
-          <Stat label="Streak" value="—" />
+          <Stat label="Rating" value={`${p.rating}`} hint={placed ? undefined : 'provisional'} />
+          <Stat label="Record" value={`${p.wins}–${p.losses}${p.draws ? `–${p.draws}` : ''}`} />
+          <Stat label="Streak" value={streak ? `${streak}W` : '—'} />
         </div>
       </div>
 
@@ -44,7 +53,7 @@ export function RankHero() {
 
       <ol className={s.ladder} aria-label="Tiers">
         {TIERS.map((t) => (
-          <li key={t.id} className={s.rung}>
+          <li key={t.id} className={s.rung} data-current={placed && t.id === tier.id}>
             <span className={s.rungDot} style={{ background: t.color }} />
             <span className={s.rungName}>{t.name}</span>
             <span className={s.rungMin}>{t.min === 0 ? 'start' : `${t.min}+`}</span>
@@ -53,6 +62,17 @@ export function RankHero() {
       </ol>
     </section>
   )
+}
+
+// Rated wins in a row, from the most recent match back.
+function currentStreak(p: PlayerProfile): number {
+  let n = 0
+  for (const m of p.recent) {
+    if (m.ratingDelta === null) continue
+    if (m.outcome !== 'win') break
+    n++
+  }
+  return n
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {

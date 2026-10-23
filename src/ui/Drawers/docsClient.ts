@@ -49,6 +49,7 @@ export const ERROR_TEXT: Record<string, string> = {
   internal: 'Something broke on the server. Try again.',
   'no-text': 'Nothing readable was found in that file.',
   conflict: 'That answer was already sent differently. Get a new question.',
+  'bank-empty': 'The exam question bank is still filling up. Try again soon.',
   method: 'The server does not take that request.',
   forbidden: 'The server refused a request from another site.',
   'not-audio': 'That recording format is not supported. Try webm, ogg, wav, mp3, m4a or mp4 audio.',
@@ -77,7 +78,7 @@ function codeFrom(status: number, body: unknown): DocsErrorCode {
 
 const isJson = (res: Response) => (res.headers.get('content-type') ?? '').includes('application/json')
 
-async function request<T>(url: string, init: RequestInit = {}, timeoutMs: number = CLIENT.timeoutMs): Promise<DocsResult<T>> {
+export async function request<T>(url: string, init: RequestInit = {}, timeoutMs: number = CLIENT.timeoutMs): Promise<DocsResult<T>> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
@@ -94,7 +95,7 @@ async function request<T>(url: string, init: RequestInit = {}, timeoutMs: number
   }
 }
 
-const postJson = <T>(url: string, body: unknown, timeoutMs?: number) =>
+export const postJson = <T>(url: string, body: unknown, timeoutMs?: number) =>
   request<T>(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }, timeoutMs)
 
 // No tutorId = every class (back-compat); with one = that class only.

@@ -51,6 +51,7 @@ export const COIN_COLOR: Record<CoinReason, string> = {
   quizCorrect: PALETTE.indigo,
   bossWin: PALETTE.coral,
   lessonDone: PALETTE.violet,
+  duel: PALETTE.sun,
 }
 
 // Ball and snack colours rotate through these.

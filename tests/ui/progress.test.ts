@@ -11,7 +11,7 @@ describe('coins', () => {
   beforeEach(() => store().resetProgress())
 
   it('pays the learning rewards and toasts each one', () => {
-    assert.deepEqual(COIN_REWARD, { sectionDone: 25, quizCorrect: 15, bossWin: 100, lessonDone: 50, teachBack: 50 })
+    assert.deepEqual(COIN_REWARD, { sectionDone: 25, quizCorrect: 15, bossWin: 100, lessonDone: 50, teachBack: 50, duel: 30 })
     store().award('sectionDone')
     store().award('quizCorrect')
     store().award('bossWin')
@@ -22,6 +22,16 @@ describe('coins', () => {
     assert.equal(store().coins, 197)
     store().award('quizCorrect', -3) // a bad amount falls back to the table
     assert.equal(store().coins, 212)
+  })
+
+  it('pays a duel once per match, whatever the replays', () => {
+    const matchId = `m${'c'.repeat(24)}`
+    assert.equal(store().awardDuel(matchId, 70), 70)
+    assert.equal(store().awardDuel(matchId, 70), 0)
+    assert.equal(store().awardDuel('not-a-match', 70), 0)
+    assert.equal(store().coins, 70)
+    assert.deepEqual(store().lastAward, { id: 1, reason: 'duel', coins: 70 })
+    assert.deepEqual(store().duelsPaid, [matchId])
   })
 
   it('prices the shop as specified, cheapest first', () => {
@@ -114,7 +124,7 @@ describe('old XP saves', () => {
     store().award('sectionDone') // a change saves the new shape
     const saved = JSON.parse(data.get(PROGRESS_STORAGE_KEY)!)
     assert.equal(saved.version, 2)
-    assert.deepEqual(Object.keys(saved.state).sort(), ['coins', 'owned', 'teachBackRewards'])
+    assert.deepEqual(Object.keys(saved.state).sort(), ['coins', 'duelsPaid', 'owned', 'teachBackRewards'])
     assert.equal(saved.state.coins, 58)
   })
 
