@@ -1,4 +1,5 @@
 # Mochee
+n**Live:** https://mochee-app.vercel.app
 
 A 3D study buddy. Mochee stands in a white-box classroom between two browser-style windows (lecture notes on the left, a whiteboard on the right) and walks the student through a lesson: he walks, points, highlights, reveals the board step by step, narrates in a real voice and runs a quick check. Students can also upload their own PDFs and ask him questions; every answer cites the exact page and quote it came from, and he says so when the document does not cover the question.
 
