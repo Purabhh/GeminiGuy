@@ -4,6 +4,12 @@
 
 A 3D tutor and study platform. Students study their own material with a 3D tutor, then compete against each other in ranked 1v1 duels on College Board exams like the SAT and PSAT.
 
+## The 3D tutor
+
+Mochee stands in a white-box classroom between two browser-style windows (lecture notes on the left, a whiteboard on the right) and walks the student through a lesson: he walks, points, highlights, reveals the board step by step, narrates in a real voice and runs a quick check. Students can also upload their own PDFs and ask him questions; every answer cites the exact page and quote it came from, and he says so when the document does not cover the question.
+
+Built with Vite 7, React 19, TypeScript, react-three-fiber, drei, Rapier physics, zustand, a Blender-built character and Gemini on a server-side proxy.
+
 ## Ranked duels (backend)
 
 The backend is a multi-user SAT/PSAT prep platform built around a real-time 1v1 duel engine.
@@ -17,12 +23,6 @@ The backend is a multi-user SAT/PSAT prep platform built around a real-time 1v1 
 - **Tested.** 100+ backend tests cover the engine, rating math, settlement and the store.
 
 Stack: TypeScript, Node.js, PostgreSQL, Redis, WebSockets.
-
-## The 3D tutor
-
-Mochee stands in a white-box classroom between two browser-style windows (lecture notes on the left, a whiteboard on the right) and walks the student through a lesson: he walks, points, highlights, reveals the board step by step, narrates in a real voice and runs a quick check. Students can also upload their own PDFs and ask him questions; every answer cites the exact page and quote it came from, and he says so when the document does not cover the question.
-
-Built with Vite 7, React 19, TypeScript, react-three-fiber, drei, Rapier physics, zustand, a Blender-built character and Gemini on a server-side proxy.
 
 ## Run it
 
