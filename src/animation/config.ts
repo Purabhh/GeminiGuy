@@ -24,7 +24,7 @@ export const CAMERA = {
 
 export const RENDER = {
   exposure: 1.18,
-  maxDpr: 2,
+  maxDpr: 1.5, // 2x quadruples the pixels for little visible gain
   shadowMapSize: 2048,
   envIntensity: 0.55,
   envBlur: 0.04,

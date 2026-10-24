@@ -1,5 +1,6 @@
+import { PerformanceMonitor } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { Suspense, useEffect, useRef, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ACESFilmicToneMapping, type Group, type PerspectiveCamera } from 'three'
 import { CAMERA, CHARACTER, RENDER } from '../animation/config'
 import { BossArena } from '../boss'
@@ -45,6 +46,8 @@ interface Props {
 // tutor drops in and the room builds itself around him (room/build.tsx).
 export function Stage({ children }: Props) {
   const ref = useRef<HTMLDivElement>(null)
+  // Drops to 1x resolution if the frame rate sags (e.g. a Chromebook), back up if it recovers.
+  const [dpr, setDpr] = useState<number>(RENDER.maxDpr)
   const setStageW = useTutorStore((s) => s.setStageW)
   const live = useTutorStore((s) => s.phase === 'live')
   // The intro reveals the room (and drops the Blender tutor in) before going live.
@@ -78,7 +81,7 @@ export function Stage({ children }: Props) {
         <Canvas
           style={{ position: 'absolute', inset: 0, pointerEvents: live ? 'auto' : 'none' }}
           shadows="soft"
-          dpr={[1, RENDER.maxDpr]}
+          dpr={dpr}
           gl={{ antialias: true, alpha: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: RENDER.exposure }}
           camera={{ fov: CAMERA.fov, near: CAMERA.near, far: CAMERA.far, position: CAMERA.position }}
           onCreated={({ camera }) => {
@@ -87,6 +90,7 @@ export function Stage({ children }: Props) {
             camera.lookAt(...CAMERA.lookAt)
           }}
         >
+          <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(RENDER.maxDpr)} flipflops={3} onFallback={() => setDpr(1)} />
           <CameraRig />
           <Lights />
           <GGHooks />
